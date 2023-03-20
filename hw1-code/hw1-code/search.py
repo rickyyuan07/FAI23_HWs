@@ -250,49 +250,12 @@ def fast(maze):
     """
     # TODO: Write your code here
     all_objectives = maze.getObjectives()
-    Objective2ID = {dots: id for id, dots in enumerate(all_objectives)}
-
-    # (f=heuristic, g, current location, last node, IDs of dots that haven't been visited (tuple))
-    startLocation = maze.getStart()
-    startNode = (fast_heuristic(startLocation, tuple(range(len(all_objectives))), all_objectives),
-                 0, startLocation, None, tuple(range(len(all_objectives))))
-    
-    visitedLocation = set() # (IDs of dots that haven't been visited, visited locations)
-    fringe = PriorityQueue()
-    fringe.put(startNode)
-    
-    endNode = None
-    while not fringe.empty():
-        node = fringe.get()
-        if len(node[4]) == 0: # all objectives have been visited
-            endNode = node
-            break
-
-        if (node[4], node[2]) in visitedLocation: # current location with the objective state has been visited
-            continue
-
-        visitedLocation.add((node[4], node[2]))
-
-        neighbors = maze.getNeighbors(row=node[2][0], col=node[2][1])
-        for neighbor in neighbors:
-            objective = node[4]
-            if neighbor in Objective2ID and Objective2ID[neighbor] in node[4]: # neighbor is an objective and hasn't been visited
-                objective = tuple([x for x in node[4] if x != Objective2ID[neighbor]])
-
-            if (objective, neighbor) in visitedLocation: # neighbor with the objective state has been visited
-                continue
-
-            new_node = (fast_heuristic(neighbor, objective, all_objectives), 
-                        node[1]-1 ,neighbor, node, objective)
-
-            fringe.put(new_node)
-
-
+    cur_position = maze.getStart()
     path = []
-    while endNode is not None:
-        path.append(endNode[2])
-        endNode = endNode[3]
-    
-    path.reverse()
-    # print(path)
-    return path
+    while len(all_objectives) > 0:
+        for obj in all_objectives:
+            dummy_maze = copy.deepcopy(maze)
+            dummy_maze.setObjectives([obj])
+            dummy_maze.setStart(cur_position)
+            cur_path = bfs(dummy_maze)
+            
