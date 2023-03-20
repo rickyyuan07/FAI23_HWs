@@ -217,7 +217,7 @@ def astar_multi(maze: maze.Maze):
             if (objective, neighbor) in visitedLocation: # neighbor with the objective state has been visited
                 continue
 
-            new_node = (node[1]+1+mst_heuristic(neighbor, objective, dist, mst_dp, all_objectives), 
+            new_node = (node[1]+1+mst_heuristic(neighbor, list(objective), dist, mst_dp, all_objectives), 
                         node[1]+1, neighbor, node, objective)
 
             fringe.put(new_node)
@@ -233,6 +233,13 @@ def astar_multi(maze: maze.Maze):
     return path
 
 
+def fast_heuristic(current: tuple, objectivesID: list, ID2objectives: list):
+    l = [0]
+    for ID in objectivesID:
+        l.append(manhattanDistance(current, ID2objectives[ID]))
+    return min(l)
+
+
 def fast(maze):
     """
     Runs suboptimal search algorithm for part 4.
@@ -242,4 +249,50 @@ def fast(maze):
     @return path: a list of tuples containing the coordinates of each state in the computed path
     """
     # TODO: Write your code here
-    return []
+    all_objectives = maze.getObjectives()
+    Objective2ID = {dots: id for id, dots in enumerate(all_objectives)}
+
+    # (f=heuristic, g, current location, last node, IDs of dots that haven't been visited (tuple))
+    startLocation = maze.getStart()
+    startNode = (fast_heuristic(startLocation, tuple(range(len(all_objectives))), all_objectives),
+                 0, startLocation, None, tuple(range(len(all_objectives))))
+    
+    visitedLocation = set() # (IDs of dots that haven't been visited, visited locations)
+    fringe = PriorityQueue()
+    fringe.put(startNode)
+    
+    endNode = None
+    while not fringe.empty():
+        node = fringe.get()
+        if len(node[4]) == 0: # all objectives have been visited
+            endNode = node
+            break
+
+        if (node[4], node[2]) in visitedLocation: # current location with the objective state has been visited
+            continue
+
+        visitedLocation.add((node[4], node[2]))
+
+        neighbors = maze.getNeighbors(row=node[2][0], col=node[2][1])
+        for neighbor in neighbors:
+            objective = node[4]
+            if neighbor in Objective2ID and Objective2ID[neighbor] in node[4]: # neighbor is an objective and hasn't been visited
+                objective = tuple([x for x in node[4] if x != Objective2ID[neighbor]])
+
+            if (objective, neighbor) in visitedLocation: # neighbor with the objective state has been visited
+                continue
+
+            new_node = (fast_heuristic(neighbor, objective, all_objectives), 
+                        node[1]-1 ,neighbor, node, objective)
+
+            fringe.put(new_node)
+
+
+    path = []
+    while endNode is not None:
+        path.append(endNode[2])
+        endNode = endNode[3]
+    
+    path.reverse()
+    # print(path)
+    return path
