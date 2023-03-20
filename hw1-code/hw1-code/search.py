@@ -183,7 +183,7 @@ def astar_multi(maze: maze.Maze):
             dummy_maze = copy.deepcopy(maze)
             dummy_maze.setObjectives([all_objectives[i]])
             dummy_maze.setStart(all_objectives[j])
-            real_cost = len(bfs(dummy_maze))
+            real_cost = len(bfs(dummy_maze))-1
             dist[j][i] = dist[i][j] = real_cost
 
     mst_dp = {} # record the cost of previously calculated MST cost (heuristic), key: tuple of IDs of dots that haven't been visited
