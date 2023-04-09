@@ -76,14 +76,14 @@ class ReflexAgent(Agent):
 
         "*** YOUR CODE HERE ***"
         FOOD_WEIGHT = 10
-        GHOST_WEIGHT = 10
-        if successorGameState.isWin():
+        GHOST_WEIGHT = -8
+        if successorGameState.isWin(): # food is empty
             return float("inf")
         nearestFood = min([manhattanDistance(newPos, food) for food in newFood.asList()])
         FoodScore = FOOD_WEIGHT / nearestFood
         nearestGhost = min([manhattanDistance(newPos,ghostState.configuration.pos) for ghostState in newGhostStates])
-        GhostScore = -GHOST_WEIGHT / nearestGhost if nearestGhost != 0 else 0
-        if newScaredTimes[0] > 0:
+        GhostScore = GHOST_WEIGHT / nearestGhost if nearestGhost != 0 else 0
+        if newScaredTimes[0] > 0: # only consider 1 ghost case
             GhostScore *= -1
         return successorGameState.getScore() + FoodScore + GhostScore
 
