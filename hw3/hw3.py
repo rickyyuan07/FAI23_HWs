@@ -198,6 +198,9 @@ class DecisionTree:
         # Hint: Create a mask based on the best feature and threshold that
         # separates the samples into two groups. Then, recursively build
         # the left and right child nodes of the current node.
+        mask = X[:, feature] <= threshold
+        left_child = self._build_tree(X[mask], y[mask], depth + 1)
+        right_child = self._build_tree(X[~mask], y[~mask], depth + 1)
 
         return {
             "feature": feature,
@@ -213,11 +216,11 @@ class DecisionTree:
         if self.model_type == "classifier":
             # TODO: 1%
             # Hint: For classification, return the most common class in the given samples.
-            raise NotImplementedError
+            return np.bincount(y).argmax()
         else:
             # TODO: 1%
             # Hint: For regression, return the mean of the given samples.
-            raise NotImplementedError
+            return np.mean(y)
 
     def _find_best_split(self, X: np.ndarray, y: np.ndarray) -> tuple[int, float]:
         best_gini = float("inf")
@@ -255,13 +258,35 @@ class DecisionTree:
         # TODO: 4%
         # Hint: Calculate the Gini index for the left and right samples,
         # then compute the weighted average based on the number of samples in each group.
-        raise NotImplementedError
+        # ref: https://en.wikipedia.org/wiki/Decision_tree_learning#Gini_impurity, https://ithelp.ithome.com.tw/articles/10276079
+        left_count = len(left_y)
+        right_count = len(right_y)
+        total_count = left_count + right_count
+
+        left_probabilities = np.bincount(left_y) / left_count
+        right_probabilities = np.bincount(right_y) / right_count
+
+        left_gini = 1 - np.sum(left_probabilities**2)
+        right_gini = 1 - np.sum(right_probabilities**2)
+        weighted_gini = (left_count / total_count) * left_gini + (right_count / total_count) * right_gini
+        return weighted_gini
 
     def _mse(self, left_y: np.ndarray, right_y: np.ndarray) -> float:
         # TODO: 4%
         # Hint: Calculate the mean squared error for the left and right samples,
         # then compute the weighted average based on the number of samples in each group.
-        raise NotImplementedError
+        left_count = len(left_y)
+        right_count = len(right_y)
+        total_count = left_count + right_count
+
+        left_mean = np.mean(left_y)
+        right_mean = np.mean(right_y)
+
+        left_mse = np.mean((left_y - left_mean)**2)
+        right_mse = np.mean((right_y - right_mean)**2)
+
+        weighted_mse = (left_count / total_count) * left_mse + (right_count / total_count) * right_mse
+        return weighted_mse
 
     def _traverse_tree(self, x: np.ndarray, node: dict):
         if isinstance(node, dict):
@@ -281,25 +306,44 @@ class RandomForest:
         max_depth: int = 5,
         model_type: str = "classifier",
     ):
+        self.n_estimators = n_estimators
+        self.max_depth = max_depth
+        self.model_type = model_type
+        self.trees = []
         # TODO: 1%
         # Hint: Initialize a list of DecisionTree instances based on the
         # specified number of estimators, max depth, and model type.
-        raise NotImplementedError
+        for _ in range(n_estimators):
+            tree = DecisionTree(max_depth=max_depth, model_type=model_type)
+            self.trees.append(tree)
 
     def fit(self, X: np.ndarray, y: np.ndarray) -> None:
         for tree in self.trees:
             # TODO: 2%
             # Hint: Generate bootstrap indices by random sampling with replacement,
             # then fit each tree with the corresponding samples from X and y.
-            # bootstrap_indices = np.random.choice(
-            raise NotImplementedError
+            bootstrap_indices = np.random.choice(len(X), size=len(X), replace=True)
+            bootstrap_X = X[bootstrap_indices]
+            bootstrap_y = y[bootstrap_indices]
+
+            # Fit each tree with the corresponding samples from X and y
+            tree.fit(bootstrap_X, bootstrap_y)
 
     def predict(self, X: np.ndarray) -> np.ndarray:
         # TODO: 2%
-        # Hint: Predict the output for each tree and combine the predictions
-        # based on the model type (majority voting for classification or averaging
-        # for regression).
-        raise NotImplementedError
+        predictions = []
+        for tree in self.trees:
+            # Predict the output for each tree
+            tree_predictions = tree.predict(X)
+            predictions.append(tree_predictions)
+
+        # Combine the predictions based on the model type
+        if self.model_type == "classifier":
+            # Majority voting for classification
+            return np.apply_along_axis(lambda x: np.argmax(np.bincount(x)), axis=0, arr=predictions)
+        else:
+            # Averaging for regression
+            return np.mean(predictions, axis=0)
 
 
 # 4. Evaluation metrics
@@ -307,8 +351,6 @@ def accuracy(y_true, y_pred):
     # TODO: 1%
     # Hint: Calculate the percentage of correct predictions by comparing
     # the true and predicted labels.
-    # print(y_true, y_pred)
-    # input()
     return np.mean(y_true == y_pred)
 
 
@@ -332,15 +374,15 @@ def main():
     y_pred = logistic_regression.predict(X_test)
     print("Logistic Regression Accuracy:", accuracy(y_test, y_pred))
 
-    # decision_tree_classifier = DecisionTree(model_type="classifier")
-    # decision_tree_classifier.fit(X_train, y_train)
-    # y_pred = decision_tree_classifier.predict(X_test)
-    # print("Decision Tree Classifier Accuracy:", accuracy(y_test, y_pred))
+    decision_tree_classifier = DecisionTree(model_type="classifier")
+    decision_tree_classifier.fit(X_train, y_train)
+    y_pred = decision_tree_classifier.predict(X_test)
+    print("Decision Tree Classifier Accuracy:", accuracy(y_test, y_pred))
 
-    # random_forest_classifier = RandomForest(model_type="classifier")
-    # random_forest_classifier.fit(X_train, y_train)
-    # y_pred = random_forest_classifier.predict(X_test)
-    # print("Random Forest Classifier Accuracy:", accuracy(y_test, y_pred))
+    random_forest_classifier = RandomForest(model_type="classifier")
+    random_forest_classifier.fit(X_train, y_train)
+    y_pred = random_forest_classifier.predict(X_test)
+    print("Random Forest Classifier Accuracy:", accuracy(y_test, y_pred))
 
     # Boston dataset - Regression
     X_train, X_test, y_train, y_test = train_test_split(boston, "medv")
@@ -351,15 +393,15 @@ def main():
     y_pred = linear_regression.predict(X_test)
     print("Linear Regression MSE:", mean_squared_error(y_test, y_pred))
 
-    # decision_tree_regressor = DecisionTree(model_type="regressor")
-    # decision_tree_regressor.fit(X_train, y_train)
-    # y_pred = decision_tree_regressor.predict(X_test)
-    # print("Decision Tree Regressor MSE:", mean_squared_error(y_test, y_pred))
+    decision_tree_regressor = DecisionTree(model_type="regressor")
+    decision_tree_regressor.fit(X_train, y_train)
+    y_pred = decision_tree_regressor.predict(X_test)
+    print("Decision Tree Regressor MSE:", mean_squared_error(y_test, y_pred))
 
-    # random_forest_regressor = RandomForest(model_type="regressor")
-    # random_forest_regressor.fit(X_train, y_train)
-    # y_pred = random_forest_regressor.predict(X_test)
-    # print("Random Forest Regressor MSE:", mean_squared_error(y_test, y_pred))
+    random_forest_regressor = RandomForest(model_type="regressor")
+    random_forest_regressor.fit(X_train, y_train)
+    y_pred = random_forest_regressor.predict(X_test)
+    print("Random Forest Regressor MSE:", mean_squared_error(y_test, y_pred))
 
 
 if __name__ == "__main__":
