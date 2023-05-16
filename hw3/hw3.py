@@ -64,6 +64,8 @@ def normalize(X: np.ndarray) -> np.ndarray:
     # Normalize features to [0, 1]
     # You can try other normalization methods, e.g., z-score, etc.
     # TODO: 1%
+    # Hint: Calculate the min and max values for each feature (column).
+    # Then, subtract the min value and divide by the range (max - min).
     raise NotImplementedError
 
 
@@ -72,6 +74,9 @@ def encode_labels(y: np.ndarray) -> np.ndarray:
     Encode labels to integers.
     """
     # TODO: 1%
+    # Hint: Create a dictionary that maps unique labels to integers.
+    # Then, use a list comprehension to replace the original labels with their
+    # corresponding integer values.
     raise NotImplementedError
 
 
@@ -100,23 +105,37 @@ class LinearModel:
         else:
             pass
         # TODO: 2%
+        # Hint: Initialize the weights based on the model type (logistic or linear).
+        # Then, update the weights using gradient descent within a loop for the
+        # specified number of iterations.
         raise NotImplementedError
 
     def predict(self, X: np.ndarray) -> np.ndarray:
         X = np.insert(X, 0, 1, axis=1)
         if self.model_type == "linear":
             # TODO: 2%
+            # Hint: Perform a matrix multiplication between the input features (X)
+            # and the learned weights.
             raise NotImplementedError
         elif self.model_type == "logistic":
             # TODO: 2%
+            # Hint: Perform a matrix multiplication between the input features (X)
+            # and the learned weights, then apply the softmax function to the result.
             raise NotImplementedError
 
     def _compute_gradients(self, X: np.ndarray, y: np.ndarray) -> np.ndarray:
         if self.model_type == "linear":
             # TODO: 3%
+            # Hint: Calculate the gradients for linear regression by computing
+            # the dot product of X transposed and the difference between the
+            # predicted values and the true values, then normalize by the number of samples.
             raise NotImplementedError
         elif self.model_type == "logistic":
             # TODO: 3%
+            # Hint: Calculate the gradients for logistic regression by computing
+            # the dot product of X transposed and the difference between the one-hot
+            # encoded true values and the softmax of the predicted values,
+            # then normalize by the number of samples.
             raise NotImplementedError
 
     def _softmax(self, z: np.ndarray) -> np.ndarray:
@@ -146,7 +165,11 @@ class DecisionTree:
 
         feature, threshold = self._find_best_split(X, y)
         # TODO: 4%
+        # Hint: Create a mask based on the best feature and threshold that
+        # separates the samples into two groups. Then, recursively build
+        # the left and right child nodes of the current node.
         raise NotImplementedError
+
 
         return {
             "feature": feature,
@@ -161,9 +184,11 @@ class DecisionTree:
     def _create_leaf(self, y: np.ndarray):
         if self.model_type == "classifier":
             # TODO: 1%
+            # Hint: For classification, return the most common class in the given samples.
             raise NotImplementedError
         else:
             # TODO: 1%
+            # Hint: For regression, return the mean of the given samples.
             raise NotImplementedError
 
     def _find_best_split(self, X: np.ndarray, y: np.ndarray) -> tuple[int, float]:
@@ -200,10 +225,15 @@ class DecisionTree:
 
     def _gini_index(self, left_y: np.ndarray, right_y: np.ndarray) -> float:
         # TODO: 4%
+        # Hint: Calculate the Gini index for the left and right samples,
+        # then compute the weighted average based on the number of samples in each group.
         raise NotImplementedError
+
 
     def _mse(self, left_y: np.ndarray, right_y: np.ndarray) -> float:
         # TODO: 4%
+        # Hint: Calculate the mean squared error for the left and right samples,
+        # then compute the weighted average based on the number of samples in each group.
         raise NotImplementedError
 
     def _traverse_tree(self, x: np.ndarray, node: dict):
@@ -225,27 +255,37 @@ class RandomForest:
         model_type: str = "classifier",
     ):
         # TODO: 1%
+        # Hint: Initialize a list of DecisionTree instances based on the
+        # specified number of estimators, max depth, and model type.
         raise NotImplementedError
 
     def fit(self, X: np.ndarray, y: np.ndarray) -> None:
         for tree in self.trees:
             # TODO: 2%
+            # Hint: Generate bootstrap indices by random sampling with replacement,
+            # then fit each tree with the corresponding samples from X and y.
             # bootstrap_indices = np.random.choice(
             raise NotImplementedError
 
     def predict(self, X: np.ndarray) -> np.ndarray:
         # TODO: 2%
+        # Hint: Predict the output for each tree and combine the predictions
+        # based on the model type (majority voting for classification or averaging
+        # for regression).
         raise NotImplementedError
 
 
 # 4. Evaluation metrics
 def accuracy(y_true, y_pred):
     # TODO: 1%
+    # Hint: Calculate the percentage of correct predictions by comparing
+    # the true and predicted labels.
     raise NotImplementedError
 
 
 def mean_squared_error(y_true, y_pred):
     # TODO: 1%
+    # Hint: Calculate the mean squared error between the true and predicted values.
     raise NotImplementedError
 
 
