@@ -69,11 +69,8 @@ def min_max_norm(X: np.ndarray) -> np.ndarray:
 
 
 def normalize(X: np.ndarray) -> np.ndarray:
-    # Normalize features to [0, 1]
-    # You can try other normalization methods, e.g., z-score, etc.
     # TODO: 1%
-    # Hint: Calculate the min and max values for each feature (column).
-    # Then, subtract the min value and divide by the range (max - min).
+    # Normalize the input features using z-score normalization. (or min-max normalization)
     return z_score_norm(X)
 
 
@@ -82,9 +79,6 @@ def encode_labels(y: np.ndarray) -> np.ndarray:
     Encode labels to integers.
     """
     # TODO: 1%
-    # Hint: Create a dictionary that maps unique labels to integers.
-    # Then, use a list comprehension to replace the original labels with their
-    # corresponding integer values.
     class_to_int = {"Iris-setosa": 0, "Iris-versicolor": 1, "Iris-virginica": 2}
     return np.array([class_to_int[label] for label in y])
 
@@ -97,13 +91,11 @@ class LinearModel:
         self.learning_rate = learning_rate
         self.iterations = iterations
         # You can try different learning rate and iterations
-        self.n_classes = 3
-        self.n_features = 4
+        self.n_classes = None
+        self.n_features = None
         self.model_type = model_type
-        if model_type == "linear":
-            self.weights = np.random.randn(self.n_features + 1)
-        else:
-            self.weights = np.random.randn(self.n_features + 1, self.n_classes)
+        # Note: weights.shape == logistic: (n_features + 1, n_classes), linear: (n_features + 1,)
+        self.weights = None
 
         assert model_type in [
             "linear",
@@ -111,64 +103,54 @@ class LinearModel:
         ], "model_type must be either 'linear' or 'logistic'"
 
     def fit(self, X: np.ndarray, y: np.ndarray) -> None:
-        X = np.insert(X, 0, 1, axis=1)
+        # TODO: 2%
+        X = np.insert(X, 0, 1, axis=1) # add bias
         self.n_classes = len(np.unique(y))
         self.n_features = X.shape[1]
 
         if self.model_type == "logistic":
+            self.weights = np.random.randn(self.n_features + 1, self.n_classes)
             # One-hot encode the target labels of shape (n_samples, n_classes)
             y = np.eye(self.n_classes)[y]
-            # gradient descent
+            # gradient descent, grad.shape == (n_features + 1, n_classes)
             for _ in range(self.iterations):
                 grad = self._compute_gradients(X, y)
-                # print(grad)
-                # input()
                 self.weights -= self.learning_rate * grad
 
         else:
             # Directly solve closed-form solution for linear regression
             self.weights = np.linalg.inv(X.T @ X) @ X.T @ y
 
-        # TODO: 2%
-        # Hint: Initialize the weights based on the model type (logistic or linear).
-        # Then, update the weights using gradient descent within a loop for the
-        # specified number of iterations.
-
     def predict(self, X: np.ndarray) -> np.ndarray:
         X = np.insert(X, 0, 1, axis=1)
         if self.model_type == "linear":
             # TODO: 2%
-            # Hint: Perform a matrix multiplication between the input features (X)
-            # and the learned weights.
+            # Perform a matrix multiplication between the input features (X) and the learned weights.
             y_pred = X @ self.weights
 
         elif self.model_type == "logistic":
             # TODO: 2%
-            # Hint: Perform a matrix multiplication between the input features (X)
-            # and the learned weights, then apply the softmax function to the result.
+            # Perform a matrix multiplication between the input features (X) and the learned weights, then apply the softmax function to the result.
             y_pred = self._softmax(X @ self.weights)
             y_pred = np.argmax(y_pred, axis=1)
 
         return y_pred
 
+
     def _compute_gradients(self, X: np.ndarray, y: np.ndarray) -> np.ndarray:
         if self.model_type == "linear":
             # TODO: 3%
-            # Hint: Calculate the gradients for linear regression by computing
-            # the dot product of X transposed and the difference between the
-            # predicted values and the true values, then normalize by the number of samples.
+            # Not implemented since we directly solve the closed-form solution for linear regression.
             raise NotImplementedError
         elif self.model_type == "logistic":
             # TODO: 3%
-            # Hint: Calculate the gradients for logistic regression by computing
-            # the dot product of X transposed and the difference between the one-hot
-            # encoded true values and the softmax of the predicted values,
-            # then normalize by the number of samples.
+            # Calculate the gradients for logistic regression by computing the dot product of X transposed and the difference between the one-hot
+            # encoded true values and the softmax of the predicted values, then normalize by the number of samples.
             gradient = X.T @ (self._softmax(X @ self.weights) - y)
             return gradient / len(X)
 
     def _softmax(self, z: np.ndarray) -> np.ndarray:
-        # z: (n_samples, n_classes)
+        # z.shape == (n_samples, n_classes)
         exp = np.exp(z)
         return exp / np.sum(exp, axis=1, keepdims=True)
 
@@ -195,8 +177,7 @@ class DecisionTree:
 
         feature, threshold = self._find_best_split(X, y)
         # TODO: 4%
-        # Hint: Create a mask based on the best feature and threshold that
-        # separates the samples into two groups. Then, recursively build
+        # Create a mask based on the best feature and threshold that separates the samples into two groups. Then, recursively build
         # the left and right child nodes of the current node.
         mask = X[:, feature] <= threshold
         left_child = self._build_tree(X[mask], y[mask], depth + 1)
@@ -256,8 +237,7 @@ class DecisionTree:
 
     def _gini_index(self, left_y: np.ndarray, right_y: np.ndarray) -> float:
         # TODO: 4%
-        # Hint: Calculate the Gini index for the left and right samples,
-        # then compute the weighted average based on the number of samples in each group.
+        # Calculate the Gini index for the left and right samples, then compute the weighted average based on the number of samples in each group.
         # ref: https://en.wikipedia.org/wiki/Decision_tree_learning#Gini_impurity, https://ithelp.ithome.com.tw/articles/10276079
         left_count = len(left_y)
         right_count = len(right_y)
@@ -273,8 +253,7 @@ class DecisionTree:
 
     def _mse(self, left_y: np.ndarray, right_y: np.ndarray) -> float:
         # TODO: 4%
-        # Hint: Calculate the mean squared error for the left and right samples,
-        # then compute the weighted average based on the number of samples in each group.
+        # Calculate the mean squared error for the left and right samples
         left_count = len(left_y)
         right_count = len(right_y)
         total_count = left_count + right_count
@@ -285,6 +264,7 @@ class DecisionTree:
         left_mse = np.mean((left_y - left_mean)**2)
         right_mse = np.mean((right_y - right_mean)**2)
 
+        # Compute the weighted average based on the number of samples in each group.
         weighted_mse = (left_count / total_count) * left_mse + (right_count / total_count) * right_mse
         return weighted_mse
 
@@ -306,13 +286,11 @@ class RandomForest:
         max_depth: int = 5,
         model_type: str = "classifier",
     ):
+        # TODO: 1%
         self.n_estimators = n_estimators
         self.max_depth = max_depth
         self.model_type = model_type
         self.trees = []
-        # TODO: 1%
-        # Hint: Initialize a list of DecisionTree instances based on the
-        # specified number of estimators, max depth, and model type.
         for _ in range(n_estimators):
             tree = DecisionTree(max_depth=max_depth, model_type=model_type)
             self.trees.append(tree)
@@ -320,8 +298,7 @@ class RandomForest:
     def fit(self, X: np.ndarray, y: np.ndarray) -> None:
         for tree in self.trees:
             # TODO: 2%
-            # Hint: Generate bootstrap indices by random sampling with replacement,
-            # then fit each tree with the corresponding samples from X and y.
+            # Generate bootstrap indices by random sampling with replacement
             bootstrap_indices = np.random.choice(len(X), size=len(X), replace=True)
             bootstrap_X = X[bootstrap_indices]
             bootstrap_y = y[bootstrap_indices]
@@ -349,14 +326,13 @@ class RandomForest:
 # 4. Evaluation metrics
 def accuracy(y_true, y_pred):
     # TODO: 1%
-    # Hint: Calculate the percentage of correct predictions by comparing
-    # the true and predicted labels.
+    # Calculate the percentage of correct predictions by comparing the true and predicted labels.
     return np.mean(y_true == y_pred)
 
 
 def mean_squared_error(y_true, y_pred):
     # TODO: 1%
-    # Hint: Calculate the mean squared error between the true and predicted values. MSE
+    # Calculate the mean squared error (MSE) between the true and predicted values.
     return np.mean((y_true - y_pred) ** 2)
 
 
