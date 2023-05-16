@@ -60,13 +60,21 @@ def train_test_split(
     return X_train, X_test, y_train, y_test
 
 
+def z_score_norm(X: np.ndarray) -> np.ndarray:
+    return (X - np.mean(X, axis=0)) / np.std(X, axis=0)
+
+
+def min_max_norm(X: np.ndarray) -> np.ndarray:
+    return (X - np.min(X, axis=0)) / (np.max(X, axis=0) - np.min(X, axis=0))
+
+
 def normalize(X: np.ndarray) -> np.ndarray:
     # Normalize features to [0, 1]
     # You can try other normalization methods, e.g., z-score, etc.
     # TODO: 1%
     # Hint: Calculate the min and max values for each feature (column).
     # Then, subtract the min value and divide by the range (max - min).
-    raise NotImplementedError
+    return z_score_norm(X)
 
 
 def encode_labels(y: np.ndarray) -> np.ndarray:
@@ -77,7 +85,8 @@ def encode_labels(y: np.ndarray) -> np.ndarray:
     # Hint: Create a dictionary that maps unique labels to integers.
     # Then, use a list comprehension to replace the original labels with their
     # corresponding integer values.
-    raise NotImplementedError
+    class_to_int = {"Iris-setosa": 0, "Iris-versicolor": 1, "Iris-virginica": 2}
+    return np.array([class_to_int[label] for label in y])
 
 
 # 3. Models
@@ -88,7 +97,13 @@ class LinearModel:
         self.learning_rate = learning_rate
         self.iterations = iterations
         # You can try different learning rate and iterations
+        self.n_classes = 3
+        self.n_features = 4
         self.model_type = model_type
+        if model_type == "linear":
+            self.weights = np.random.randn(self.n_features + 1)
+        else:
+            self.weights = np.random.randn(self.n_features + 1, self.n_classes)
 
         assert model_type in [
             "linear",
@@ -97,18 +112,27 @@ class LinearModel:
 
     def fit(self, X: np.ndarray, y: np.ndarray) -> None:
         X = np.insert(X, 0, 1, axis=1)
-        n_classes = len(np.unique(y))
-        n_features = X.shape[1]
+        self.n_classes = len(np.unique(y))
+        self.n_features = X.shape[1]
 
         if self.model_type == "logistic":
-            pass
+            # One-hot encode the target labels of shape (n_samples, n_classes)
+            y = np.eye(self.n_classes)[y]
+            # gradient descent
+            for _ in range(self.iterations):
+                grad = self._compute_gradients(X, y)
+                # print(grad)
+                # input()
+                self.weights -= self.learning_rate * grad
+
         else:
-            pass
+            # Directly solve closed-form solution for linear regression
+            self.weights = np.linalg.inv(X.T @ X) @ X.T @ y
+
         # TODO: 2%
         # Hint: Initialize the weights based on the model type (logistic or linear).
         # Then, update the weights using gradient descent within a loop for the
         # specified number of iterations.
-        raise NotImplementedError
 
     def predict(self, X: np.ndarray) -> np.ndarray:
         X = np.insert(X, 0, 1, axis=1)
@@ -116,12 +140,16 @@ class LinearModel:
             # TODO: 2%
             # Hint: Perform a matrix multiplication between the input features (X)
             # and the learned weights.
-            raise NotImplementedError
+            y_pred = X @ self.weights
+
         elif self.model_type == "logistic":
             # TODO: 2%
             # Hint: Perform a matrix multiplication between the input features (X)
             # and the learned weights, then apply the softmax function to the result.
-            raise NotImplementedError
+            y_pred = self._softmax(X @ self.weights)
+            y_pred = np.argmax(y_pred, axis=1)
+
+        return y_pred
 
     def _compute_gradients(self, X: np.ndarray, y: np.ndarray) -> np.ndarray:
         if self.model_type == "linear":
@@ -136,9 +164,11 @@ class LinearModel:
             # the dot product of X transposed and the difference between the one-hot
             # encoded true values and the softmax of the predicted values,
             # then normalize by the number of samples.
-            raise NotImplementedError
+            gradient = X.T @ (self._softmax(X @ self.weights) - y)
+            return gradient / len(X)
 
     def _softmax(self, z: np.ndarray) -> np.ndarray:
+        # z: (n_samples, n_classes)
         exp = np.exp(z)
         return exp / np.sum(exp, axis=1, keepdims=True)
 
@@ -168,8 +198,6 @@ class DecisionTree:
         # Hint: Create a mask based on the best feature and threshold that
         # separates the samples into two groups. Then, recursively build
         # the left and right child nodes of the current node.
-        raise NotImplementedError
-
 
         return {
             "feature": feature,
@@ -229,7 +257,6 @@ class DecisionTree:
         # then compute the weighted average based on the number of samples in each group.
         raise NotImplementedError
 
-
     def _mse(self, left_y: np.ndarray, right_y: np.ndarray) -> float:
         # TODO: 4%
         # Hint: Calculate the mean squared error for the left and right samples,
@@ -280,13 +307,15 @@ def accuracy(y_true, y_pred):
     # TODO: 1%
     # Hint: Calculate the percentage of correct predictions by comparing
     # the true and predicted labels.
-    raise NotImplementedError
+    # print(y_true, y_pred)
+    # input()
+    return np.mean(y_true == y_pred)
 
 
 def mean_squared_error(y_true, y_pred):
     # TODO: 1%
-    # Hint: Calculate the mean squared error between the true and predicted values.
-    raise NotImplementedError
+    # Hint: Calculate the mean squared error between the true and predicted values. MSE
+    return np.mean((y_true - y_pred) ** 2)
 
 
 # 5. Main function
@@ -303,15 +332,15 @@ def main():
     y_pred = logistic_regression.predict(X_test)
     print("Logistic Regression Accuracy:", accuracy(y_test, y_pred))
 
-    decision_tree_classifier = DecisionTree(model_type="classifier")
-    decision_tree_classifier.fit(X_train, y_train)
-    y_pred = decision_tree_classifier.predict(X_test)
-    print("Decision Tree Classifier Accuracy:", accuracy(y_test, y_pred))
+    # decision_tree_classifier = DecisionTree(model_type="classifier")
+    # decision_tree_classifier.fit(X_train, y_train)
+    # y_pred = decision_tree_classifier.predict(X_test)
+    # print("Decision Tree Classifier Accuracy:", accuracy(y_test, y_pred))
 
-    random_forest_classifier = RandomForest(model_type="classifier")
-    random_forest_classifier.fit(X_train, y_train)
-    y_pred = random_forest_classifier.predict(X_test)
-    print("Random Forest Classifier Accuracy:", accuracy(y_test, y_pred))
+    # random_forest_classifier = RandomForest(model_type="classifier")
+    # random_forest_classifier.fit(X_train, y_train)
+    # y_pred = random_forest_classifier.predict(X_test)
+    # print("Random Forest Classifier Accuracy:", accuracy(y_test, y_pred))
 
     # Boston dataset - Regression
     X_train, X_test, y_train, y_test = train_test_split(boston, "medv")
@@ -322,15 +351,15 @@ def main():
     y_pred = linear_regression.predict(X_test)
     print("Linear Regression MSE:", mean_squared_error(y_test, y_pred))
 
-    decision_tree_regressor = DecisionTree(model_type="regressor")
-    decision_tree_regressor.fit(X_train, y_train)
-    y_pred = decision_tree_regressor.predict(X_test)
-    print("Decision Tree Regressor MSE:", mean_squared_error(y_test, y_pred))
+    # decision_tree_regressor = DecisionTree(model_type="regressor")
+    # decision_tree_regressor.fit(X_train, y_train)
+    # y_pred = decision_tree_regressor.predict(X_test)
+    # print("Decision Tree Regressor MSE:", mean_squared_error(y_test, y_pred))
 
-    random_forest_regressor = RandomForest(model_type="regressor")
-    random_forest_regressor.fit(X_train, y_train)
-    y_pred = random_forest_regressor.predict(X_test)
-    print("Random Forest Regressor MSE:", mean_squared_error(y_test, y_pred))
+    # random_forest_regressor = RandomForest(model_type="regressor")
+    # random_forest_regressor.fit(X_train, y_train)
+    # y_pred = random_forest_regressor.predict(X_test)
+    # print("Random Forest Regressor MSE:", mean_squared_error(y_test, y_pred))
 
 
 if __name__ == "__main__":
