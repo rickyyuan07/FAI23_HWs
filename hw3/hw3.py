@@ -109,7 +109,7 @@ class LinearModel:
         self.n_features = X.shape[1]
 
         if self.model_type == "logistic":
-            self.weights = np.random.randn(self.n_features + 1, self.n_classes)
+            self.weights = np.random.randn(self.n_features, self.n_classes)
             # One-hot encode the target labels of shape (n_samples, n_classes)
             y = np.eye(self.n_classes)[y]
             # gradient descent, grad.shape == (n_features + 1, n_classes)
