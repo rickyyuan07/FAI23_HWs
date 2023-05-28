@@ -12,12 +12,19 @@ class PCA:
 
     def fit(self, X: np.ndarray) -> None:
         #TODO: 10%
-        raise NotImplementedError
+        self.mean = np.mean(X, axis=0)
+        X_shifted = X - self.mean
+        cov = X_shifted.T @ X_shifted # X^T @ X, Note that scalar does not matter
+        eigenvalues, eigenvectors = np.linalg.eigh(cov)
+        sorted_indices = np.argsort(eigenvalues)[::-1]
+        self.components = eigenvectors[:, sorted_indices[:self.n_components]]
 
     def transform(self, X: np.ndarray) -> np.ndarray:
         #TODO: 2%
-        raise NotImplementedError
+        X_shifted = X - self.mean
+        return np.dot(X_shifted, self.components)
 
     def reconstruct(self, X):
-        raise NotImplementedError
         #TODO: 2%
+        X_transformed = self.transform(X)
+        return np.dot(X_transformed, self.components.T) + self.mean

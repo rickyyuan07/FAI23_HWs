@@ -31,6 +31,16 @@ def read_image():
     return np.array(img_vector, dtype='float')
 
 
+def plot_image(img_vec: np.ndarray, title: str):
+    """
+    DO NOT MODIFY THIS FUNCTION.
+    """
+    img_array = img_vec.astype('float').reshape(61, 80)
+    plt.imshow(img_array, cmap='gray')
+    plt.title(title)
+    plt.show()
+
+
 def load_data(split: str) -> tuple[np.ndarray, np.ndarray]:
     """
     DO NOT MODIFY THIS FUNCTION.
@@ -74,7 +84,7 @@ def reconstruction_loss(img_vec: np.ndarray, img_vec_reconstructed: np.ndarray) 
 
 def main():
     print("Loading data...")
-    X_train, y_train = load_data("train")
+    X_train, y_train = load_data("train") # (135, 4880) (135,)
     X_val, y_val = load_data("val")
     # Prepare data
     # PCA
@@ -128,6 +138,7 @@ def main():
     # Reconstruct Image: subject05_17.png
     img_vec = read_image()
     img_reconstruct_pca = pca.reconstruct(img_vec)
+    # plot_image(img_reconstruct_pca, "Reconstructed Image with PCA")
     img_reconstruct_ae = autoencoder.reconstruct(torch.tensor(img_vec, dtype=torch.float32))
     img_reconstruct_deno_ae = deno_autoencoder.reconstruct(torch.tensor(img_vec, dtype=torch.float32))
 
