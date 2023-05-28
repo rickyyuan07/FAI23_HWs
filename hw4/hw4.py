@@ -38,7 +38,7 @@ def plot_image(img_vec: np.ndarray, title: str):
     img_array = img_vec.astype('float').reshape(61, 80)
     plt.imshow(img_array, cmap='gray')
     plt.title(title)
-    plt.show()
+    plt.savefig(title+'.png')
 
 
 def load_data(split: str) -> tuple[np.ndarray, np.ndarray]:
@@ -96,8 +96,8 @@ def main():
     autoencoder = Autoencoder(input_dim=4880, encoding_dim=488)
     print("Autoencoder Training Start...")
     autoencoder.fit(X_train, epochs=500, batch_size=135)
-    #
-    # # DenoisingAutoencoder
+
+    # DenoisingAutoencoder
     deno_autoencoder = DenoisingAutoencoder(input_dim=4880, encoding_dim=488)
     print("DenoisingAutoencoder Training Start...")
     deno_autoencoder.fit(X_train, epochs=500, batch_size=135)
@@ -110,8 +110,8 @@ def main():
     # Feature Transform: Autoencoder
     X_train_transformed_ae = autoencoder.transform(X_train)
     X_val_transformed_ae = autoencoder.transform(X_val)
-    #
-    # # Feature Transform: Autoencoder
+
+    # Feature Transform: Autoencoder
     X_train_transformed_deno_ae = deno_autoencoder.transform(X_train)
     X_val_transformed_deno_ae = deno_autoencoder.transform(X_val)
 
@@ -138,9 +138,11 @@ def main():
     # Reconstruct Image: subject05_17.png
     img_vec = read_image()
     img_reconstruct_pca = pca.reconstruct(img_vec)
-    # plot_image(img_reconstruct_pca, "Reconstructed Image with PCA")
     img_reconstruct_ae = autoencoder.reconstruct(torch.tensor(img_vec, dtype=torch.float32))
     img_reconstruct_deno_ae = deno_autoencoder.reconstruct(torch.tensor(img_vec, dtype=torch.float32))
+    plot_image(img_reconstruct_pca, "Reconstructed Image with PCA")
+    plot_image(img_reconstruct_ae, "Reconstructed Image with Autoencoder")
+    plot_image(img_reconstruct_deno_ae, "Reconstructed Image with DenoisingAutoencoder")
 
     reconstruction_loss_pca = reconstruction_loss(img_vec, img_reconstruct_pca)
     reconstruction_loss_ae = reconstruction_loss(img_vec, img_reconstruct_ae)
