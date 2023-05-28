@@ -7,8 +7,8 @@ Implementation of Principal Component Analysis.
 class PCA:
     def __init__(self, n_components: int) -> None:
         self.n_components = n_components
-        self.mean = None
-        self.components = None
+        self.mean = None # (4880,)
+        self.components = None # (4880, 40)
 
     def fit(self, X: np.ndarray) -> None:
         #TODO: 10%
