@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 DATA_PATH = './data'
 # set random seed
 np.random.seed(0)
+torch.manual_seed(0)
 """
 Tips for debugging:
 - Use `print` to check the shape of your data. Shape mismatch is a common error.
