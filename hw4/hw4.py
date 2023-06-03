@@ -89,9 +89,19 @@ def main():
     X_val, y_val = load_data("val")
     # Prepare data
     # PCA
-    pca = PCA(n_components=40)
+    pca = PCA(n_components=4)
     print("PCA Training Start...")
     pca.fit(X_train)
+
+    v1 = pca.components[:, 0]
+    v2 = pca.components[:, 1]
+    v3 = pca.components[:, 2]
+    v4 = pca.components[:, 3]
+
+    plot_image(v1, "v1")
+    plot_image(v2, "v2")
+    plot_image(v3, "v3")
+    plot_image(v4, "v4")
 
     # Autoencoder
     autoencoder = Autoencoder(input_dim=4880, encoding_dim=488)
