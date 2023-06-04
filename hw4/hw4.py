@@ -40,6 +40,7 @@ def plot_image(img_vec: np.ndarray, title: str):
     plt.imshow(img_array, cmap='gray')
     plt.title(title)
     plt.savefig(title+'.png')
+    plt.clf()
 
 
 def load_data(split: str) -> tuple[np.ndarray, np.ndarray]:
@@ -89,7 +90,7 @@ def main():
     X_val, y_val = load_data("val")
     # Prepare data
     # PCA
-    pca = PCA(n_components=4)
+    pca = PCA(n_components=40)
     print("PCA Training Start...")
     pca.fit(X_train)
 
@@ -151,6 +152,7 @@ def main():
     img_reconstruct_pca = pca.reconstruct(img_vec)
     img_reconstruct_ae = autoencoder.reconstruct(torch.tensor(img_vec, dtype=torch.float32))
     img_reconstruct_deno_ae = deno_autoencoder.reconstruct(torch.tensor(img_vec, dtype=torch.float32))
+    plot_image(img_vec, "Original Image")
     plot_image(img_reconstruct_pca, "Reconstructed Image with PCA")
     plot_image(img_reconstruct_ae, "Reconstructed Image with Autoencoder")
     plot_image(img_reconstruct_deno_ae, "Reconstructed Image with DenoisingAutoencoder")
