@@ -51,11 +51,12 @@ class Autoencoder(nn.Module):
             epoch_loss = total_loss / len(data_loader)
             losses.append(epoch_loss)
 
-        # plt.plot(losses)
-        # plt.xlabel("Epochs")
-        # plt.ylabel("Loss")
-        # plt.title("Autoencoder Training Loss")
-        # plt.show()
+        plt.plot(losses)
+        plt.xlabel("Epochs")
+        plt.ylabel("Loss")
+        plt.title("Autoencoder Training Loss")
+        plt.savefig("autoencoder_training_loss.png")
+        plt.clf()
     
     def transform(self, X):
         #TODO: 2%
@@ -109,8 +110,9 @@ class DenoisingAutoencoder(Autoencoder):
             epoch_loss = total_loss / len(data_loader)
             losses.append(epoch_loss)
 
-        # plt.plot(losses)
-        # plt.xlabel("Epochs")
-        # plt.ylabel("Loss")
-        # plt.title("Denoising Autoencoder Training Loss")
-        # plt.show()
+        plt.plot(losses)
+        plt.xlabel("Epochs")
+        plt.ylabel("Loss")
+        plt.title("Denoising Autoencoder Training Loss")
+        plt.savefig("denoising_autoencoder_training_loss.png")
+        plt.clf()
